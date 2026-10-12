@@ -1,0 +1,329 @@
+:root {
+  --ar-cyan: #00f3ff;
+  --ar-blue: #0066ff;
+  --ar-green: #39ff14;
+  --ar-button-bg: rgba(255, 255, 255, 0.90); /* Bright White Background */
+  --ar-border: rgba(0, 243, 255, 0.6);
+  --ar-glow: rgba(0, 243, 255, 0.4);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #020408;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Upsized Main Stage: 1300px x 800px */
+#wrapper {
+  position: relative;
+  width: 1300px;
+  height: 800px;
+  border-radius: 28px;
+  overflow: hidden;
+  box-shadow: 0 0 70px rgba(0, 243, 255, 0.25);
+  border: 1.5px solid var(--ar-border);
+}
+
+/* Webcam background */
+#video {
+  position: absolute;
+  width: 1300px;
+  height: 800px;
+  object-fit: cover;
+  transform: scaleX(-1);
+  filter: brightness(0.75) contrast(1.1);
+}
+
+/* Interactive Canvas */
+#gameCanvas {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+}
+
+.glass-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.7) 100%);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ==========================================================
+   1. WELCOME OVERLAY SCREEN
+   ========================================================== */
+#welcomeScreen {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: rgba(4, 8, 16, 0.90);
+  backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-align: center;
+  transition: opacity 0.5s ease;
+}
+
+.welcome-header {
+  position: absolute;
+  top: 45px;
+  right: 55px;
+  text-align: right;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.welcome-user {
+  font-size: 16px;
+  color: var(--ar-cyan);
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+
+.welcome-clock {
+  font-size: 36px;
+  font-weight: 700;
+  color: #fff;
+  margin-top: 4px;
+}
+
+.welcome-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid var(--ar-border);
+  padding: 60px 90px;
+  border-radius: 32px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6);
+}
+
+.welcome-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 42px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 16px;
+  letter-spacing: 2px;
+  text-shadow: 0 0 25px var(--ar-cyan);
+}
+
+.welcome-subtitle {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 40px;
+}
+
+#joinBtn {
+  display: inline-block;
+  padding: 22px 68px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #020408;
+  background: var(--ar-cyan);
+  border: none;
+  border-radius: 50px;
+  box-shadow: 0 0 40px var(--ar-cyan);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+/* ==========================================================
+   2. HUD TOP BAR (Bright White Buttons for Maximum Visibility)
+   ========================================================== */
+#hudTop {
+  position: absolute;
+  top: 35px;
+  right: 40px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  z-index: 20;
+}
+
+.hud-btn {
+  width: 68px;
+  height: 68px;
+  background: var(--ar-button-bg); /* White Glass Background */
+  border: 2px solid var(--ar-cyan);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(14px);
+  cursor: pointer;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.5), 0 0 20px var(--ar-glow);
+  transition: transform 0.2s;
+}
+
+/* Black icon image rendered sharply against white background */
+.hud-btn img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  filter: none; /* Original black icons clearly visible */
+}
+
+.hud-timer-box {
+  background: rgba(10, 18, 32, 0.85);
+  border: 2px solid var(--ar-cyan);
+  border-radius: 18px;
+  padding: 0 28px;
+  backdrop-filter: blur(14px);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ar-cyan);
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  height: 68px;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.5), 0 0 20px var(--ar-glow);
+}
+
+/* ==========================================================
+   3. LEFT TOOLBAR
+   ========================================================== */
+#hudLeft {
+  position: absolute;
+  top: 50%;
+  left: 40px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 20;
+}
+
+/* ==========================================================
+   4. CENTER MAIN LECTURE VIEW
+   ========================================================== */
+#lectureContainer {
+  position: absolute;
+  top: 48%;
+  left: 54%;
+  transform: translate(-50%, -50%);
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#lectureImg {
+  width: 680px;
+  border-radius: 22px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+}
+
+#subtitleBox {
+  margin-top: 20px;
+  width: 680px;
+  background: rgba(4, 8, 18, 0.90);
+  border: 1.5px solid var(--ar-cyan);
+  border-radius: 16px;
+  padding: 18px 28px;
+  color: #fff;
+  font-size: 18px;
+  text-align: center;
+  backdrop-filter: blur(14px);
+  display: none;
+  box-shadow: 0 0 25px rgba(0, 243, 255, 0.35);
+}
+
+/* ==========================================================
+   5. POPUP MODALS
+   ========================================================== */
+.ar-modal {
+  position: absolute;
+  z-index: 25;
+  background: rgba(6, 12, 24, 0.94);
+  border: 1.5px solid var(--ar-cyan);
+  border-radius: 22px;
+  padding: 28px;
+  color: #fff;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 0 40px rgba(0, 243, 255, 0.35);
+  display: none;
+}
+
+#alarmModal { top: 120px; right: 130px; width: 320px; }
+#calendarModal { top: 120px; right: 40px; width: 380px; }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+  text-align: center;
+  font-size: 14px;
+}
+.cal-day-head { color: var(--ar-cyan); font-weight: 700; }
+.cal-date { padding: 10px; background: rgba(255,255,255,0.06); border-radius: 10px; }
+.cal-today { background: var(--ar-blue); color: #fff; font-weight: bold; border: 1.5px solid var(--ar-cyan); }
+
+#aiModal {
+  bottom: 55px;
+  left: 130px;
+  width: 400px;
+}
+.chat-box {
+  height: 160px;
+  overflow-y: auto;
+  font-size: 15px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.chat-msg-ai {
+  background: rgba(0, 243, 255, 0.18);
+  padding: 12px 16px;
+  border-radius: 14px;
+  border-left: 4px solid var(--ar-cyan);
+}
+.chat-input-row { display: flex; align-items: center; gap: 12px; }
+.chat-input {
+  flex: 1;
+  background: rgba(255,255,255,0.1);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: 12px;
+  padding: 10px 16px;
+  color: #fff;
+  font-size: 14px;
+}
+
+/* Mic Button with White Background Container */
+.mic-btn {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  cursor: pointer;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 4px;
+}
+
+#toast {
+  position: absolute;
+  bottom: 45px;
+  right: 45px;
+  background: rgba(57, 255, 20, 0.18);
+  border: 1.5px solid var(--ar-green);
+  color: var(--ar-green);
+  padding: 16px 32px;
+  border-radius: 50px;
+  font-size: 16px;
+  font-weight: 700;
+  z-index: 30;
+  display: none;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 0 25px rgba(57, 255, 20, 0.35);
+}

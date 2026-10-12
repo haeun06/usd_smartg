@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SMART GLASSES AR OS DEMO</title>
+
+<!-- MediaPipe Hands & Camera Utils -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1675466862/camera_utils.js" crossorigin="anonymous"></script>
+
+<!-- Futuristic Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<!-- External CSS -->
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="wrapper">
+  <!-- Webcam Stream -->
+  <video id="video" autoplay playsinline muted></video>
+
+  <!-- Interactive Tracking Canvas -->
+  <canvas id="gameCanvas" width="1200" height="750"></canvas>
+
+  <div class="glass-overlay"></div>
+
+  <!-- 1. WELCOME OVERLAY SCREEN -->
+  <div id="welcomeScreen">
+    <div class="welcome-header">
+      <div class="welcome-user">WELCOME, USER</div>
+      <div class="welcome-clock" id="welcomeClock">00:00:00</div>
+    </div>
+    <div class="welcome-card">
+      <div class="welcome-title">SMART GLASSES OS</div>
+      <div class="welcome-subtitle">Would you like to join the lecture?</div>
+      <button id="joinBtn" class="interactive-element" data-action="join">JOIN LECTURE</button>
+    </div>
+  </div>
+
+  <!-- 2. HUD TOP BAR -->
+  <div id="hudTop">
+    <div class="hud-btn interactive-element" data-action="calendar">
+      <img src="calendarusd.png" alt="Calendar">
+    </div>
+    <div class="hud-btn interactive-element" data-action="alarm">
+      <img src="alarmusd.png" alt="Alarm">
+    </div>
+    <div class="hud-timer-box" id="liveClock">23:59:59</div>
+  </div>
+
+  <!-- 3. LEFT TOOLBAR -->
+  <div id="hudLeft">
+    <div class="hud-btn interactive-element" data-action="word">
+      <img src="wordusd.png" alt="Glossary">
+    </div>
+    <div class="hud-btn interactive-element" data-action="bookmark">
+      <img src="bookmarkusd.png" alt="Bookmark">
+    </div>
+    <div class="hud-btn interactive-element" data-action="subtitle">
+      <img src="subtitleusd.png" alt="Subtitles">
+    </div>
+    <div class="hud-btn interactive-element" data-action="ai">
+      <img src="aihelperusd.png" alt="AI Helper">
+    </div>
+  </div>
+
+  <!-- 4. CENTER MAIN LECTURE VIEW -->
+  <div id="lectureContainer">
+    <img id="lectureImg" src="lectureusd.png" alt="Academic Lecture">
+    <div id="subtitleBox">
+      <strong>Live Translation:</strong> "This is live translation... abcd"
+    </div>
+  </div>
+
+  <!-- 5. POPUP MODALS -->
+  <!-- Alarm Popup -->
+  <div id="alarmModal" class="ar-modal">
+    <div style="font-weight:700; font-size:15px; margin-bottom:8px; color:var(--ar-cyan);">NOTIFICATIONS</div>
+    <div style="font-size:13px; color:rgba(255,255,255,0.75);">No new notifications at this time.</div>
+  </div>
+
+  <!-- Calendar Popup (November 2026) -->
+  <div id="calendarModal" class="ar-modal">
+    <div style="font-weight:700; font-size:16px; color:var(--ar-cyan); text-align:center;">NOVEMBER 2026</div>
+    <div class="cal-grid">
+      <div class="cal-day-head">S</div><div class="cal-day-head">M</div><div class="cal-day-head">T</div>
+      <div class="cal-day-head">W</div><div class="cal-day-head">T</div><div class="cal-day-head">F</div><div class="cal-day-head">S</div>
+      <!-- Dates -->
+      <div class="cal-date">1</div><div class="cal-date">2</div><div class="cal-date">3</div><div class="cal-date">4</div>
+      <div class="cal-date">5</div><div class="cal-date">6</div><div class="cal-date">7</div><div class="cal-date">8</div>
+      <div class="cal-date">9</div><div class="cal-date cal-today">10</div><div class="cal-date">11</div><div class="cal-date">12</div>
+      <div class="cal-date">13</div><div class="cal-date">14</div><div class="cal-date">15</div><div class="cal-date">16</div>
+      <div class="cal-date">17</div><div class="cal-date">18</div><div class="cal-date">19</div><div class="cal-date">20</div>
+      <div class="cal-date">21</div><div class="cal-date">22</div><div class="cal-date">23</div><div class="cal-date">24</div>
+      <div class="cal-date">25</div><div class="cal-date">26</div><div class="cal-date">27</div><div class="cal-date">28</div>
+      <div class="cal-date">29</div><div class="cal-date">30</div>
+    </div>
+  </div>
+
+  <!-- AI Helper Modal -->
+  <div id="aiModal" class="ar-modal">
+    <div style="font-weight:700; font-size:15px; margin-bottom:10px; color:var(--ar-cyan);">AI ACADEMIC ASSISTANT</div>
+    <div class="chat-box">
+      <div class="chat-msg-ai">Hello! Do you have any questions regarding the lecture material?</div>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" class="chat-input" placeholder="Ask AI anything..." readonly>
+      <img src="micusd.png" class="mic-btn" alt="Voice Mic" onerror="this.src='aihelperusd.png'">
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast">Bookmark Saved</div>
+</div>
+
+<!-- External JS -->
+<script src="script.js"></script>
+</body>
+</html>
