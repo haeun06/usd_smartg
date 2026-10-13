@@ -17,9 +17,9 @@ const H = 800;
 let aim = { x: -999, y: -999, visible: false };
 let holdStartTime = null;
 let currentHoverTarget = null;
-const HOLD_MS = 400; // 0.4s hover activation
+const HOLD_MS = 250;
 
-// 3. HAND HOVER INTERACTION LOGIC
+// 3. ENHANCED HAND HOVER INTERACTION LOGIC
 function checkHoverTargets() {
   const elements = document.querySelectorAll('.interactive-element');
   let hoveredElem = null;
@@ -30,10 +30,12 @@ function checkHoverTargets() {
     if (elem.offsetWidth > 0 && elem.offsetHeight > 0) {
       const rect = elem.getBoundingClientRect();
       
-      const x = rect.left - wrapperRect.left;
-      const y = rect.top - wrapperRect.top;
-      const w = rect.width;
-      const h = rect.height;
+      // Calculate relative coordinates with extra 20px padding for easier targeting
+      const padding = 20;
+      const x = rect.left - wrapperRect.left - padding;
+      const y = rect.top - wrapperRect.top - padding;
+      const w = rect.width + (padding * 2);
+      const h = rect.height + (padding * 2);
 
       if (aim.x >= x && aim.x <= x + w && aim.y >= y && aim.y <= y + h) {
         hoveredElem = elem;
@@ -53,7 +55,7 @@ function checkHoverTargets() {
 
       if (held >= HOLD_MS) {
         triggerAction(currentHoverTarget.getAttribute('data-action'));
-        holdStartTime = performance.now() + 1000; // Cooldown after trigger
+        holdStartTime = performance.now() + 800;
       }
     }
   } else {
@@ -66,7 +68,7 @@ function checkHoverTargets() {
 function triggerAction(action) {
   if (action === 'join') {
     document.getElementById('welcomeScreen').style.opacity = '0';
-    setTimeout(() => document.getElementById('welcomeScreen').style.display = 'none', 500);
+    setTimeout(() => document.getElementById('welcomeScreen').style.display = 'none', 400);
   } else if (action === 'alarm') {
     toggleModal('alarmModal');
   } else if (action === 'calendar') {
@@ -145,14 +147,14 @@ const hands = new Hands({
 hands.setOptions({
   maxNumHands: 1,
   modelComplexity: 1,
-  minDetectionConfidence: 0.7,
+  minDetectionConfidence: 0.65,
   minTrackingConfidence: 0.6
 });
 
 hands.onResults((results) => {
   if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
     const landmarks = results.multiHandLandmarks[0];
-    aim.x = (1 - landmarks[8].x) * W; // Mirrored X coordinate
+    aim.x = (1 - landmarks[8].x) * W; // Mirrored X
     aim.y = landmarks[8].y * H;
     aim.visible = true;
   } else {
@@ -160,7 +162,7 @@ hands.onResults((results) => {
   }
 });
 
-// 7. CAMERA SETUP (1300x800 Stream)
+// 7. CAMERA SETUP
 const video = document.getElementById('video');
 navigator.mediaDevices.getUserMedia({ video: { width: 1300, height: 800, facingMode: 'user' } })
   .then((stream) => {
