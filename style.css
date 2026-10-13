@@ -2,7 +2,7 @@
   --ar-cyan: #00f3ff;
   --ar-blue: #0066ff;
   --ar-green: #39ff14;
-  --ar-button-bg: rgba(255, 255, 255, 0.90); /* Bright White Background */
+  --ar-button-bg: rgba(255, 255, 255, 0.90);
   --ar-border: rgba(0, 243, 255, 0.6);
   --ar-glow: rgba(0, 243, 255, 0.4);
 }
@@ -56,9 +56,7 @@ body {
   z-index: 5;
 }
 
-/* ==========================================================
-   1. WELCOME OVERLAY SCREEN
-   ========================================================== */
+/* 1. WELCOME OVERLAY SCREEN */
 #welcomeScreen {
   position: absolute;
   inset: 0;
@@ -135,9 +133,7 @@ body {
   transition: transform 0.2s;
 }
 
-/* ==========================================================
-   2. HUD TOP BAR (Bright White Buttons for Maximum Visibility)
-   ========================================================== */
+/* 2. HUD TOP BAR (Bright White Buttons for Maximum Visibility) */
 #hudTop {
   position: absolute;
   top: 35px;
@@ -168,7 +164,7 @@ body {
   width: 42px;
   height: 42px;
   object-fit: contain;
-  filter: none; /* Original black icons clearly visible */
+  filter: none; 
 }
 
 .hud-timer-box {
@@ -188,9 +184,7 @@ body {
   box-shadow: 0 6px 25px rgba(0,0,0,0.5), 0 0 20px var(--ar-glow);
 }
 
-/* ==========================================================
-   3. LEFT TOOLBAR
-   ========================================================== */
+/* 3. LEFT TOOLBAR*/
 #hudLeft {
   position: absolute;
   top: 50%;
@@ -202,9 +196,7 @@ body {
   z-index: 20;
 }
 
-/* ==========================================================
-   4. CENTER MAIN LECTURE VIEW
-   ========================================================== */
+/* 4. CENTER MAIN LECTURE VIEW*/
 #lectureContainer {
   position: absolute;
   top: 48%;
@@ -238,9 +230,7 @@ body {
   box-shadow: 0 0 25px rgba(0, 243, 255, 0.35);
 }
 
-/* ==========================================================
-   5. POPUP MODALS
-   ========================================================== */
+/* 5. POPUP MODALS*/
 .ar-modal {
   position: absolute;
   z-index: 25;
