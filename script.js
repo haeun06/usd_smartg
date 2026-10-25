@@ -3,12 +3,11 @@ function updateClocks() {
   const now = new Date();
   const timeStr = now.toTimeString().split(' ')[0];
   document.getElementById('liveClock').textContent = timeStr;
-  document.getElementById('welcomeClock').textContent = timeStr;
 }
 setInterval(updateClocks, 1000);
 updateClocks();
 
-// 2. CANVAS & HAND TRACKING SYSTEM (1300x800)
+// 2. CANVAS & HAND TRACKING SYSTEM
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const W = 1300;
@@ -17,9 +16,11 @@ const H = 800;
 let aim = { x: -999, y: -999, visible: false };
 let holdStartTime = null;
 let currentHoverTarget = null;
-const HOLD_MS = 250;
+const HOLD_MS = 250; // Fast 0.25s trigger
 
-// 3. ENHANCED HAND HOVER INTERACTION LOGIC
+let currentTier = 'FREE'; // FREE, PLUS, PRO
+
+// 3. HAND HOVER INTERACTION LOGIC
 function checkHoverTargets() {
   const elements = document.querySelectorAll('.interactive-element');
   let hoveredElem = null;
@@ -29,9 +30,7 @@ function checkHoverTargets() {
   elements.forEach(elem => {
     if (elem.offsetWidth > 0 && elem.offsetHeight > 0) {
       const rect = elem.getBoundingClientRect();
-      
-      // Calculate relative coordinates with extra 20px padding for easier targeting
-      const padding = 20;
+      const padding = 15;
       const x = rect.left - wrapperRect.left - padding;
       const y = rect.top - wrapperRect.top - padding;
       const w = rect.width + (padding * 2);
@@ -64,25 +63,77 @@ function checkHoverTargets() {
   }
 }
 
-// 4. ACTION TRIGGERS
+// 4. ACTION TRIGGERS & TIER LOGIC
 function triggerAction(action) {
-  if (action === 'join') {
-    document.getElementById('welcomeScreen').style.opacity = '0';
-    setTimeout(() => document.getElementById('welcomeScreen').style.display = 'none', 400);
+  if (action === 'nextToTier') {
+    document.getElementById('howToUseScreen').style.display = 'none';
+    document.getElementById('tierSelectScreen').style.display = 'flex';
+  } else if (action === 'selectFree') {
+    activateTier('FREE');
+  } else if (action === 'selectPlus') {
+    activateTier('PLUS');
+  } else if (action === 'selectPro') {
+    activateTier('PRO');
   } else if (action === 'alarm') {
     toggleModal('alarmModal');
   } else if (action === 'calendar') {
     toggleModal('calendarModal');
   } else if (action === 'ai') {
-    toggleModal('aiModal');
+    if (currentTier === 'FREE') {
+      showToast('AI Assistant requires Plus/Pro Tier');
+    } else {
+      toggleModal('aiModal');
+    }
   } else if (action === 'subtitle') {
-    const sub = document.getElementById('subtitleBox');
-    sub.style.display = (sub.style.display === 'block') ? 'none' : 'block';
+    if (currentTier === 'FREE') {
+      showToast('Live Subtitles require Plus/Pro Tier');
+    } else {
+      const sub = document.getElementById('subtitleBox');
+      sub.style.display = (sub.style.display === 'block') ? 'none' : 'block';
+    }
   } else if (action === 'bookmark') {
     showToast('Lecture Moment Saved');
   } else if (action === 'word') {
-    showToast('Key Terms / Glossary Opened');
+    if (currentTier === 'FREE') {
+      showToast('Key Glossary requires Plus/Pro Tier');
+    } else {
+      toggleModal('wordModal');
+    }
+  } else if (action === 'summary') {
+    toggleModal('summaryModal');
   }
+}
+
+function activateTier(tier) {
+  currentTier = tier;
+  document.getElementById('tierSelectScreen').style.display = 'none';
+  document.getElementById('activeTierBadge').textContent = tier + ' OS';
+
+  const summaryBtn = document.getElementById('summaryHudBtn');
+  summaryBtn.style.display = (tier === 'PRO') ? 'flex' : 'none';
+
+  if (tier === 'FREE') {
+    showAdPopup();
+  } else {
+    showToast('Welcome to Smart Glass ' + tier + ' OS');
+  }
+}
+
+function showAdPopup() {
+  const adModal = document.getElementById('adModal');
+  const timerElem = document.getElementById('adTimer');
+  adModal.style.display = 'block';
+  let timeLeft = 5;
+
+  const adInterval = setInterval(() => {
+    timeLeft--;
+    timerElem.textContent = timeLeft;
+    if (timeLeft <= 0) {
+      clearInterval(adInterval);
+      adModal.style.display = 'none';
+      showToast('Free AR Session Started');
+    }
+  }, 1000);
 }
 
 function toggleModal(id) {
@@ -96,7 +147,7 @@ function showToast(msg) {
   const toast = document.getElementById('toast');
   toast.textContent = msg;
   toast.style.display = 'block';
-  setTimeout(() => toast.style.display = 'none', 2000);
+  setTimeout(() => toast.style.display = 'none', 2200);
 }
 
 // 5. DRAW CROSSHAIR & PROGRESS RING
@@ -154,7 +205,7 @@ hands.setOptions({
 hands.onResults((results) => {
   if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
     const landmarks = results.multiHandLandmarks[0];
-    aim.x = (1 - landmarks[8].x) * W; // Mirrored X
+    aim.x = (1 - landmarks[8].x) * W;
     aim.y = landmarks[8].y * H;
     aim.visible = true;
   } else {
