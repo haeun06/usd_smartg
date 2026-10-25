@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SMART GLASSES AR OS DEMO</title>
+<title>SMART GLASSES AR OS - TIER SYSTEM DEMO</title>
 
 <!-- MediaPipe Hands & Camera Utils -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
@@ -22,25 +22,97 @@
   <video id="video" autoplay playsinline muted></video>
 
   <!-- Interactive Tracking Canvas -->
-  <canvas id="gameCanvas" width="1200" height="750"></canvas>
+  <canvas id="gameCanvas" width="1300" height="800"></canvas>
 
   <div class="glass-overlay"></div>
 
-  <!-- 1. WELCOME OVERLAY SCREEN -->
-  <div id="welcomeScreen">
-    <div class="welcome-header">
-      <div class="welcome-user">WELCOME, USER</div>
-      <div class="welcome-clock" id="welcomeClock">00:00:00</div>
-    </div>
-    <div class="welcome-card">
-      <div class="welcome-title">SMART GLASSES OS</div>
-      <div class="welcome-subtitle">Would you like to join the lecture?</div>
-      <button id="joinBtn" class="interactive-element" data-action="join">JOIN LECTURE</button>
+  <!-- STEP 1: HOW TO USE ONBOARDING SCREEN -->
+  <div id="howToUseScreen" class="overlay-screen">
+    <div class="guide-card">
+      <div class="guide-badge">AR GLASSES OS INITIALIZATION</div>
+      <img src="aiglassesusd.png" alt="AR Glasses Tracking Guide" class="guide-img" onerror="this.style.display='none'">
+      <h1 class="guide-title">HOW TO USE HAND TRACKING</h1>
+      <p class="guide-text">
+        This device operates via camera-based hand tracking.<br>
+        Look at the UI element and hold your <strong>Index Fingertip</strong> over target buttons for <strong>0.25 seconds</strong> to select.
+      </p>
+      <div class="guide-subnote">Please trigger the button below to proceed.</div>
+      <button id="understandBtn" class="interactive-element main-action-btn" data-action="nextToTier">I UNDERSTAND</button>
     </div>
   </div>
 
-  <!-- 2. HUD TOP BAR -->
+  <!-- STEP 2: VERSION TIER SELECTION SCREEN -->
+  <div id="tierSelectScreen" class="overlay-screen" style="display: none;">
+    <div class="tier-container">
+      <h2 class="tier-header-title">SELECT OS TIER</h2>
+      <p class="tier-header-subtitle">Choose a subscription tier to experience customized AR HUD features.</p>
+      
+      <div class="tier-cards-wrapper">
+        <!-- FREE TIER -->
+        <div class="tier-card">
+          <div class="tier-tag free-tag">FREE</div>
+          <h3 class="tier-name">BASIC VERSION</h3>
+          <div class="tier-price">$0 / Month</div>
+          <ul class="tier-features">
+            <li>Includes 5s AR Ads</li>
+            <li>Main Lecture View</li>
+            <li>Bookmark Saved Moments</li>
+            <li class="disabled-feat">No Live Translation</li>
+            <li class="disabled-feat">No AI Assistant</li>
+          </ul>
+          <button class="interactive-element tier-select-btn" data-action="selectFree">SELECT FREE</button>
+        </div>
+
+        <!-- PLUS TIER -->
+        <div class="tier-card highlighted-tier">
+          <div class="tier-tag plus-tag">RECOMMENDED</div>
+          <h3 class="tier-name">PLUS VERSION</h3>
+          <div class="tier-price">$9.99 / Month</div>
+          <div class="tier-login-req">ACCOUNT LOGIN REQUIRED</div>
+          <ul class="tier-features">
+            <li>100% Ad-Free Experience</li>
+            <li>Unlimited Live Translation</li>
+            <li>Bookmark & Key Glossary</li>
+            <li>Limited AI Chat Assistant</li>
+            <li class="disabled-feat">No AI Voice & Summary</li>
+          </ul>
+          <button class="interactive-element tier-select-btn" data-action="selectPlus">SELECT PLUS</button>
+        </div>
+
+        <!-- PRO TIER -->
+        <div class="tier-card pro-card">
+          <div class="tier-tag pro-tag">PRO AI</div>
+          <h3 class="tier-name">PRO VERSION</h3>
+          <div class="tier-price">$19.99 / Month</div>
+          <div class="tier-login-req">ACCOUNT LOGIN REQUIRED</div>
+          <ul class="tier-features">
+            <li>All Plus Features Included</li>
+            <li>Unlimited AI Voice Assistant</li>
+            <li>Real-time Lecture Summary</li>
+            <li>Interactive AI Quiz HUD</li>
+            <li>Smart Audio Notes</li>
+          </ul>
+          <button class="interactive-element tier-select-btn pro-btn" data-action="selectPro">SELECT PRO</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AD POPUP OVERLAY (For Free Version) -->
+  <div id="adModal" class="ar-modal ad-modal-container">
+    <div class="ad-badge">SPONSORED ADVERTISEMENT</div>
+    <div class="ad-content">
+      <img src="adbannerusd.png" alt="Ad Banner" class="ad-banner-img" onerror="this.src='lectureusd.png'">
+      <div class="ad-text-title">Upgrade to Plus for Ad-Free AR</div>
+    </div>
+    <div id="adCountdownText">Ad closes in <span id="adTimer">5</span>s...</div>
+  </div>
+
+  <!-- STEP 3: MAIN HUD TOP BAR -->
   <div id="hudTop">
+    <!-- Active Tier Indicator Badge -->
+    <div id="activeTierBadge" class="tier-badge-hud">FREE OS</div>
+
     <div class="hud-btn interactive-element" data-action="calendar">
       <img src="calendarusd.png" alt="Calendar">
     </div>
@@ -50,23 +122,27 @@
     <div class="hud-timer-box" id="liveClock">23:59:59</div>
   </div>
 
-  <!-- 3. LEFT TOOLBAR -->
+  <!-- STEP 3: MAIN HUD LEFT TOOLBAR -->
   <div id="hudLeft">
-    <div class="hud-btn interactive-element" data-action="word">
+    <div class="hud-btn interactive-element tier-feat-word" data-action="word">
       <img src="wordusd.png" alt="Glossary">
     </div>
-    <div class="hud-btn interactive-element" data-action="bookmark">
+    <div class="hud-btn interactive-element tier-feat-bookmark" data-action="bookmark">
       <img src="bookmarkusd.png" alt="Bookmark">
     </div>
-    <div class="hud-btn interactive-element" data-action="subtitle">
+    <div class="hud-btn interactive-element tier-feat-subtitle" data-action="subtitle">
       <img src="subtitleusd.png" alt="Subtitles">
     </div>
-    <div class="hud-btn interactive-element" data-action="ai">
+    <div class="hud-btn interactive-element tier-feat-ai" data-action="ai">
       <img src="aihelperusd.png" alt="AI Helper">
+    </div>
+    <!-- Pro Exclusive Summary Button -->
+    <div id="summaryHudBtn" class="hud-btn interactive-element pro-only-btn" data-action="summary" style="display: none;">
+      <span class="pro-btn-text">AI SUM</span>
     </div>
   </div>
 
-  <!-- 4. CENTER MAIN LECTURE VIEW -->
+  <!-- MAIN LECTURE VIEW -->
   <div id="lectureContainer">
     <img id="lectureImg" src="lectureusd.png" alt="Academic Lecture">
     <div id="subtitleBox">
@@ -74,20 +150,17 @@
     </div>
   </div>
 
-  <!-- 5. POPUP MODALS -->
-  <!-- Alarm Popup -->
+  <!-- POPUP MODALS -->
   <div id="alarmModal" class="ar-modal">
     <div style="font-weight:700; font-size:15px; margin-bottom:8px; color:var(--ar-cyan);">NOTIFICATIONS</div>
     <div style="font-size:13px; color:rgba(255,255,255,0.75);">No new notifications at this time.</div>
   </div>
 
-  <!-- Calendar Popup (November 2026) -->
   <div id="calendarModal" class="ar-modal">
     <div style="font-weight:700; font-size:16px; color:var(--ar-cyan); text-align:center;">NOVEMBER 2026</div>
     <div class="cal-grid">
       <div class="cal-day-head">S</div><div class="cal-day-head">M</div><div class="cal-day-head">T</div>
       <div class="cal-day-head">W</div><div class="cal-day-head">T</div><div class="cal-day-head">F</div><div class="cal-day-head">S</div>
-      <!-- Dates -->
       <div class="cal-date">1</div><div class="cal-date">2</div><div class="cal-date">3</div><div class="cal-date">4</div>
       <div class="cal-date">5</div><div class="cal-date">6</div><div class="cal-date">7</div><div class="cal-date">8</div>
       <div class="cal-date">9</div><div class="cal-date cal-today">10</div><div class="cal-date">11</div><div class="cal-date">12</div>
@@ -99,7 +172,6 @@
     </div>
   </div>
 
-  <!-- AI Helper Modal -->
   <div id="aiModal" class="ar-modal">
     <div style="font-weight:700; font-size:15px; margin-bottom:10px; color:var(--ar-cyan);">AI ACADEMIC ASSISTANT</div>
     <div class="chat-box">
@@ -111,11 +183,27 @@
     </div>
   </div>
 
-  <!-- Toast Notification -->
+  <!-- GLOSSARY IMAGE POPUP MODAL -->
+  <div id="wordModal" class="ar-modal">
+    <div style="font-weight:700; font-size:16px; margin-bottom:12px; color:var(--ar-cyan); text-align:center;">KEY GLOSSARY & TERMS</div>
+    <div style="display:flex; justify-content:center; align-items:center;">
+      <img src="word.png" alt="Glossary Reference" style="max-width:360px; max-height:240px; border-radius:12px; border:1px solid rgba(0,243,255,0.4);" onerror="this.src='wordusd.png'">
+    </div>
+  </div>
+
+  <!-- PRO EXCLUSIVE: LECTURE SUMMARY MODAL -->
+  <div id="summaryModal" class="ar-modal">
+    <div style="font-weight:700; font-size:16px; margin-bottom:10px; color:var(--ar-cyan);">AI LECTURE SUMMARY</div>
+    <div style="font-size:13px; line-height:1.6; color:rgba(255,255,255,0.85);">
+      1. Main Topic: Introduction to Academic Presentation.<br>
+      2. Key Factor: UI/UX design in Smart Glass AR HUD.<br>
+      3. Conclusion: Tier-based subscription models optimize user accessibility.
+    </div>
+  </div>
+
   <div id="toast">Bookmark Saved</div>
 </div>
 
-<!-- External JS -->
 <script src="script.js"></script>
 </body>
 </html>
