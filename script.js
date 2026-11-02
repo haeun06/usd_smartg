@@ -415,3 +415,4 @@ navigator.mediaDevices.getUserMedia({ video: { width: 1440, height: 900, facingM
     camera.start();
   })
   .catch((err) => console.error("Camera access error:", err));
+
