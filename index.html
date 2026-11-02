@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SMART GLASSES AR OS - TIER SYSTEM DEMO</title>
+<title>SMART GLASSES AR OS - DEMO DAY FINAL</title>
 
 <!-- MediaPipe Hands & Camera Utils -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1675469240/hands.js" crossorigin="anonymous"></script>
@@ -17,13 +17,15 @@
 </head>
 <body>
 
-  
 <div id="wrapper">
-  <!-- Webcam Stream -->
-  <video id="video" autoplay playsinline muted></video>
+  <!-- Dynamic Location Background Image -->
+  <img id="locationBg" src="tram.png" alt="Context Location" onerror="this.style.display='none'">
+
+  <!-- Hidden Video Stream (Kept active for background hand tracking) -->
+  <video id="video" autoplay playsinline muted style="opacity: 0; position: absolute; pointer-events: none;"></video>
 
   <!-- Interactive Tracking Canvas -->
-  <canvas id="gameCanvas" width="1300" height="800"></canvas>
+  <canvas id="gameCanvas" width="1440" height="900"></canvas>
 
   <div class="glass-overlay"></div>
 
@@ -34,7 +36,7 @@
       <img src="aiglassesusd.png" alt="AR Glasses Tracking Guide" class="guide-img" onerror="this.style.display='none'">
       <h1 class="guide-title">HOW TO USE HAND TRACKING</h1>
       <p class="guide-text">
-        This device operates via camera-based hand tracking.<br>
+        This device operates via background camera hand tracking.<br>
         Look at the UI element and hold your <strong>Index Fingertip</strong> over target buttons for <strong>0.25 seconds</strong> to select.
       </p>
       <div class="guide-subnote">Please trigger the button below to proceed.</div>
@@ -55,8 +57,8 @@
           <h3 class="tier-name">BASIC VERSION</h3>
           <div class="tier-price">$0 / Month</div>
           <ul class="tier-features">
-            <li>Includes 5s AR Ads</li>
-            <li>Main Lecture View</li>
+            <li>Includes 1-Min Recurring Ads</li>
+            <li>Tram View Background</li>
             <li>Bookmark Saved Moments</li>
             <li class="disabled-feat">No Live Translation</li>
             <li class="disabled-feat">No AI Assistant</li>
@@ -71,11 +73,11 @@
           <div class="tier-price">$9.99 / Month</div>
           <div class="tier-login-req">ACCOUNT LOGIN REQUIRED</div>
           <ul class="tier-features">
-            <li>100% Ad-Free Experience</li>
+            <li>Restaurant View Background</li>
             <li>Unlimited Live Translation</li>
-            <li>Bookmark & Key Glossary</li>
-            <li>Limited AI Chat Assistant</li>
-            <li class="disabled-feat">No AI Voice & Summary</li>
+            <li>Large Glossary Reference</li>
+            <li>3 AI Queries Available</li>
+            <li class="disabled-feat">No AI Summary & Quiz</li>
           </ul>
           <button class="interactive-element tier-select-btn" data-action="selectPlus">SELECT PLUS</button>
         </div>
@@ -87,11 +89,11 @@
           <div class="tier-price">$19.99 / Month</div>
           <div class="tier-login-req">ACCOUNT LOGIN REQUIRED</div>
           <ul class="tier-features">
-            <li>All Plus Features Included</li>
-            <li>Unlimited AI Voice Assistant</li>
-            <li>Real-time Lecture Summary</li>
-            <li>Interactive AI Quiz HUD</li>
-            <li>Smart Audio Notes</li>
+            <li>Train View Background</li>
+            <li>Extended AI Queries (5 Questions)</li>
+            <li>Large AI Summary HUD</li>
+            <li>Interactive AI Quiz Modal</li>
+            <li>Full Presentation Suite</li>
           </ul>
           <button class="interactive-element tier-select-btn pro-btn" data-action="selectPro">SELECT PRO</button>
         </div>
@@ -103,15 +105,14 @@
   <div id="adModal" class="ar-modal ad-modal-container">
     <div class="ad-badge">SPONSORED ADVERTISEMENT</div>
     <div class="ad-content">
-      <img src="adbannerusd.png" alt="Ad Banner" class="ad-banner-img" onerror="this.src='lectureusd.png'">
-      <div class="ad-text-title">Upgrade to Plus for Ad-Free AR</div>
+      <img id="adBannerImg" src="adbannerusd.png" alt="Ad Banner" class="ad-banner-img">
+      <div class="ad-text-title">Upgrade to Plus/Pro for Ad-Free Experience</div>
     </div>
     <div id="adCountdownText">Ad closes in <span id="adTimer">5</span>s...</div>
   </div>
 
-  <!-- STEP 3: MAIN HUD TOP BAR -->
+  <!-- MAIN HUD TOP BAR -->
   <div id="hudTop">
-    <!-- Active Tier Indicator Badge -->
     <div id="activeTierBadge" class="tier-badge-hud">FREE OS</div>
 
     <div class="hud-btn interactive-element" data-action="calendar">
@@ -123,7 +124,7 @@
     <div class="hud-timer-box" id="liveClock">23:59:59</div>
   </div>
 
-  <!-- STEP 3: MAIN HUD LEFT TOOLBAR -->
+  <!-- MAIN HUD LEFT TOOLBAR -->
   <div id="hudLeft">
     <div class="hud-btn interactive-element tier-feat-word" data-action="word">
       <img src="wordusd.png" alt="Glossary">
@@ -137,71 +138,104 @@
     <div class="hud-btn interactive-element tier-feat-ai" data-action="ai">
       <img src="aihelperusd.png" alt="AI Helper">
     </div>
-    <!-- Pro Exclusive Summary Button -->
+    <!-- Pro Exclusive Buttons -->
     <div id="summaryHudBtn" class="hud-btn interactive-element pro-only-btn" data-action="summary" style="display: none;">
       <span class="pro-btn-text">AI SUM</span>
     </div>
+    <div id="quizHudBtn" class="hud-btn interactive-element pro-only-btn" data-action="quiz" style="display: none;">
+      <span class="pro-btn-text">AI QUIZ</span>
+    </div>
   </div>
 
-  <!-- MAIN LECTURE VIEW -->
+  <!-- BOTTOM RIGHT RESET BUTTON -->
+  <div id="resetHudBtn" class="hud-btn interactive-element reset-hud-btn" data-action="resetToStart">
+    <span class="reset-btn-text">RESET</span>
+  </div>
+
+  <!-- MAIN ENLARGED LECTURE VIEW -->
   <div id="lectureContainer">
-    <img id="lectureImg" src="lectureusd.png" alt="Academic Lecture">
+    <img id="lectureImg" src="lectureusd.png" alt="Academic Lecture Slide">
     <div id="subtitleBox">
-      <strong>Live Translation:</strong> "This is live translation... abcd"
+      💬 <strong>Live Translation:</strong> <span id="subText">"This is live translation... abcd"</span>
     </div>
   </div>
 
   <!-- POPUP MODALS -->
   <div id="alarmModal" class="ar-modal">
-    <div style="font-weight:700; font-size:15px; margin-bottom:8px; color:var(--ar-cyan);">NOTIFICATIONS</div>
-    <div style="font-size:13px; color:rgba(255,255,255,0.75);">No new notifications at this time.</div>
+    <div style="font-weight:700; font-size:18px; margin-bottom:14px; color:var(--ar-cyan);">🔔 NOTIFICATIONS</div>
+    <div class="notif-item">• USD Demo Day Notice</div>
+    <div class="notif-item">• Report Submission Deadline</div>
   </div>
 
+  <!-- NOVEMBER 2026 CALENDAR WITH TODAY HIGHLIGHT (NOV 2) -->
   <div id="calendarModal" class="ar-modal">
-    <div style="font-weight:700; font-size:16px; color:var(--ar-cyan); text-align:center;">NOVEMBER 2026</div>
+    <div style="font-weight:700; font-size:20px; color:var(--ar-cyan); text-align:center;">NOVEMBER 2026</div>
     <div class="cal-grid">
       <div class="cal-day-head">S</div><div class="cal-day-head">M</div><div class="cal-day-head">T</div>
       <div class="cal-day-head">W</div><div class="cal-day-head">T</div><div class="cal-day-head">F</div><div class="cal-day-head">S</div>
-      <div class="cal-date">1</div><div class="cal-date">2</div><div class="cal-date">3</div><div class="cal-date">4</div>
-      <div class="cal-date">5</div><div class="cal-date">6</div><div class="cal-date">7</div><div class="cal-date">8</div>
-      <div class="cal-date">9</div><div class="cal-date cal-today">10</div><div class="cal-date">11</div><div class="cal-date">12</div>
-      <div class="cal-date">13</div><div class="cal-date">14</div><div class="cal-date">15</div><div class="cal-date">16</div>
-      <div class="cal-date">17</div><div class="cal-date">18</div><div class="cal-date">19</div><div class="cal-date">20</div>
-      <div class="cal-date">21</div><div class="cal-date">22</div><div class="cal-date">23</div><div class="cal-date">24</div>
-      <div class="cal-date">25</div><div class="cal-date">26</div><div class="cal-date">27</div><div class="cal-date">28</div>
-      <div class="cal-date">29</div><div class="cal-date">30</div>
+      
+      <div class="cal-date">1</div>
+      <div class="cal-date cal-today">2</div><!-- TODAY CHECK (NOV 2, 2026) -->
+      <div class="cal-date">3</div><div class="cal-date">4</div>
+      <div class="cal-date cal-event interactive-element" data-action="cal_5">5</div>
+      <div class="cal-date">6</div><div class="cal-date">7</div><div class="cal-date">8</div>
+      <div class="cal-date cal-event interactive-element" data-action="cal_9">9</div>
+      <div class="cal-date cal-event interactive-element" data-action="cal_10">10</div>
+      <div class="cal-date">11</div><div class="cal-date">12</div><div class="cal-date">13</div><div class="cal-date">14</div>
+      <div class="cal-date">15</div><div class="cal-date">16</div><div class="cal-date">17</div><div class="cal-date">18</div>
+      <div class="cal-date">19</div><div class="cal-date">20</div><div class="cal-date">21</div><div class="cal-date">22</div>
+      <div class="cal-date">23</div><div class="cal-date">24</div><div class="cal-date">25</div><div class="cal-date">26</div>
+      <div class="cal-date">27</div><div class="cal-date">28</div><div class="cal-date">29</div><div class="cal-date">30</div>
     </div>
+    <div id="calDetailBox" class="cal-detail-area">Select an outlined date (5, 9, 10) to view details.</div>
   </div>
 
+  <!-- AI ACADEMIC ASSISTANT -->
   <div id="aiModal" class="ar-modal">
-    <div style="font-weight:700; font-size:15px; margin-bottom:10px; color:var(--ar-cyan);">AI ACADEMIC ASSISTANT</div>
-    <div class="chat-box">
-      <div class="chat-msg-ai">Hello! Do you have any questions regarding the lecture material?</div>
+    <div style="font-weight:700; font-size:18px; margin-bottom:14px; color:var(--ar-cyan);">🤖 AI ACADEMIC ASSISTANT</div>
+    <div class="chat-box" id="chatBox">
+      <div class="chat-msg-ai">Hello! Tap the microphone button below to ask a question.</div>
     </div>
     <div class="chat-input-row">
-      <input type="text" class="chat-input" placeholder="Ask AI anything..." readonly>
-      <img src="micusd.png" class="mic-btn" alt="Voice Mic" onerror="this.src='aihelperusd.png'">
+      <input type="text" id="chatInputDisplay" class="chat-input" placeholder="Tap mic to query..." readonly>
+      <div class="mic-btn interactive-element" data-action="triggerMic">
+        <img src="micusd.png" alt="Voice Mic" onerror="this.src='aihelperusd.png'">
+      </div>
     </div>
   </div>
 
-  <!-- GLOSSARY IMAGE POPUP MODAL -->
-  <div id="wordModal" class="ar-modal">
-    <div style="font-weight:700; font-size:16px; margin-bottom:12px; color:var(--ar-cyan); text-align:center;">KEY GLOSSARY & TERMS</div>
+  <!-- ENLARGED KEY GLOSSARY POPUP -->
+  <div id="wordModal" class="ar-modal large-word-modal">
+    <div style="font-weight:700; font-size:20px; margin-bottom:16px; color:var(--ar-cyan); text-align:center;">📖 KEY GLOSSARY & TERMS</div>
     <div style="display:flex; justify-content:center; align-items:center;">
-      <img src="word.png" alt="Glossary Reference" style="max-width:360px; max-height:240px; border-radius:12px; border:1px solid rgba(0,243,255,0.4);" onerror="this.src='wordusd.png'">
+      <img src="word.png" alt="Glossary Reference" class="glossary-img-large" onerror="this.src='wordusd.png'">
     </div>
   </div>
 
-  <!-- PRO EXCLUSIVE: LECTURE SUMMARY MODAL -->
-  <div id="summaryModal" class="ar-modal">
-    <div style="font-weight:700; font-size:16px; margin-bottom:10px; color:var(--ar-cyan);">AI LECTURE SUMMARY</div>
-    <div style="font-size:13px; line-height:1.6; color:rgba(255,255,255,0.85);">
-      1. Main Topic: Introduction to Academic Presentation.<br>
-      2. Key Factor: UI/UX design in Smart Glass AR HUD.<br>
-      3. Conclusion: Tier-based subscription models optimize user accessibility.
+  <!-- ENLARGED PRO AI SUMMARY MODAL -->
+  <div id="summaryModal" class="ar-modal large-summary-modal">
+    <div style="font-weight:700; font-size:22px; margin-bottom:16px; color:var(--ar-cyan);">📝 REAL-TIME LECTURE SUMMARY</div>
+    <div class="summary-text-content">
+      <p><strong>1. Primary Focus:</strong> Overview of Creative Technology (VU & UT) modules including USD, ST, FiD, UHBD, and ProfDev.</p>
+      <p><strong>2. Core Innovation:</strong> Implementation of multi-tiered AR Smart Glasses OS with real-time hand tracking and computer vision HUD.</p>
+      <p><strong>3. Academic Impact:</strong> Seamless classroom translation, instant AI-assisted Q&A, and interactive lecture summaries for enhanced learning efficiency.</p>
     </div>
   </div>
 
+  <!-- PRO EXCLUSIVE: AI QUIZ MODAL -->
+  <div id="quizModal" class="ar-modal quiz-full-modal">
+    <div class="quiz-disclaimer">NOTE: Sample AI evaluation quiz.</div>
+    <div id="quizContainer">
+      <h3 id="quizQuestion" class="quiz-q-title">Q1. What is the name of this study/degree program?</h3>
+      <div id="quizOptions" class="quiz-options-grid"></div>
+      <div class="quiz-nav-row">
+        <button id="quizBackBtn" class="interactive-element quiz-nav-btn" data-action="quizPrev">BACK</button>
+        <button id="quizNextBtn" class="interactive-element quiz-nav-btn" data-action="quizNext">NEXT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
   <div id="toast">Bookmark Saved</div>
 </div>
 
