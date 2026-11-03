@@ -196,7 +196,7 @@ function handleAiMicQuery() {
     const limitMsg = document.createElement('div');
     limitMsg.className = 'chat-msg-ai';
     limitMsg.style.borderColor = '#ff3366';
-    limitMsg.textContent = "⚠️ Query limit reached for Plus Tier. Please wait 24 hours or upgrade to Pro for unlimited AI access.";
+    limitMsg.textContent = "Query limit reached for Plus Tier. Please wait 24 hours or upgrade to Pro for unlimited AI access.";
     chatBox.appendChild(limitMsg);
     chatBox.scrollTop = chatBox.scrollHeight;
     return;
@@ -415,4 +415,5 @@ navigator.mediaDevices.getUserMedia({ video: { width: 1440, height: 900, facingM
     camera.start();
   })
   .catch((err) => console.error("Camera access error:", err));
+
 
