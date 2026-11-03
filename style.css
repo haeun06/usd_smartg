@@ -154,19 +154,44 @@ body {
 #hudLeft { position: absolute; top: 50%; left: 45px; transform: translateY(-50%); display: flex; flex-direction: column; gap: 24px; z-index: 20; }
 .pro-btn-text { font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 900; color: var(--ar-purple); }
 
-/* BOTTOM RIGHT RESET BUTTON STYLING */
+/* BOTTOM RIGHT COMPACT RESET BUTTON */
 .reset-hud-btn {
   position: absolute;
-  bottom: 45px;
-  right: 45px;
-  z-index: 25;
-  border-color: #ff3366;
+  bottom: 20px;
+  right: 20px;
+  width: auto !important;
+  height: auto !important;
+  padding: 8px 16px !important;
+  background: rgba(10, 18, 32, 0.75) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+  z-index: 50;
+  cursor: pointer;
 }
+
 .reset-btn-text {
   font-family: 'Orbitron', sans-serif;
-  font-size: 12px;
-  font-weight: 900;
-  color: #ff3366;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 51, 102, 0.85);
+  letter-spacing: 1px;
+}
+
+/* Toast Message Position Adjustment */
+#toast {
+  position: absolute;
+  bottom: 65px;
+  right: 20px;
+  background: rgba(57, 255, 20, 0.18);
+  border: 2px solid var(--ar-green);
+  color: var(--ar-green);
+  padding: 14px 28px;
+  border-radius: 50px;
+  font-size: 15px;
+  font-weight: 700;
+  z-index: 45;
+  display: none;
 }
 
 /* LECTURE VIEW CONTAINER */
