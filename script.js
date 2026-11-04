@@ -20,11 +20,35 @@ const HOLD_MS = 250;
 
 let lastTriggerTime = 0;
 let currentTier = 'FREE';
+let isRentalLoggedInAsPro = false;
+
 let currentAdIndex = 0;
 let freeAdTimerInterval = null;
 let basicExamAdInterval = null;
 let examTypingTimeout = null;
 let examTypingInterval = null;
+
+// RENTAL USAGE TIMER LOGIC
+let rentalTimerSeconds = 0;
+let rentalTimerInterval = null;
+
+function startRentalTimer() {
+  stopRentalTimer();
+  rentalTimerSeconds = 0;
+  document.getElementById('rentalUsageTimer').style.display = 'flex';
+  rentalTimerInterval = setInterval(() => {
+    rentalTimerSeconds++;
+    const hrs = String(Math.floor(rentalTimerSeconds / 3600)).padStart(2, '0');
+    const mins = String(Math.floor((rentalTimerSeconds % 3600) / 60)).padStart(2, '0');
+    const secs = String(rentalTimerSeconds % 60).padStart(2, '0');
+    document.getElementById('rentalClockDisplay').textContent = `${hrs}:${mins}:${secs}`;
+  }, 1000);
+}
+
+function stopRentalTimer() {
+  if (rentalTimerInterval) clearInterval(rentalTimerInterval);
+  document.getElementById('rentalUsageTimer').style.display = 'none';
+}
 
 // SLIDE AUTO-ROTATION
 const slideImages = ['lectureusd.png', 'ppt2.png', 'ppt3.png', 'ppt4.png', 'ppt5.png', 'ppt6.png'];
@@ -125,7 +149,7 @@ function checkHoverTargets() {
   }
 }
 
-// 4. ACTION TRIGGERS
+// 4. ACTION TRIGGERS (렌탈 선택 클릭 처리 완벽 보장)
 function triggerAction(action) {
   if (!action) return;
 
@@ -133,10 +157,22 @@ function triggerAction(action) {
     document.getElementById('howToUseScreen').style.display = 'none';
     document.getElementById('tierSelectScreen').style.display = 'flex';
   } else if (action === 'selectFree') {
+    isRentalLoggedInAsPro = false;
     activateTier('FREE');
-  } else if (action === 'selectPlus') {
+  } else if (action === 'selectRental') {
+    // 렌탈 버튼 클릭 시 무조건 PRO 로그인 물어보는 팝업 화면 활성화
+    document.getElementById('tierSelectScreen').style.display = 'none';
+    document.getElementById('rentalLoginModal').style.display = 'block';
+  } else if (action === 'rentalProLoginYes') {
+    document.getElementById('rentalLoginModal').style.display = 'none';
+    isRentalLoggedInAsPro = true;
+    activateTier('RENTAL');
+  } else if (action === 'rentalProLoginNo') {
+    document.getElementById('rentalLoginModal').style.display = 'none';
+    isRentalLoggedInAsPro = false;
     activateTier('RENTAL');
   } else if (action === 'selectPro') {
+    isRentalLoggedInAsPro = false;
     activateTier('PRO');
   } else if (action === 'resetToStart') {
     resetAllStates();
@@ -222,7 +258,9 @@ function triggerAction(action) {
 function resetAllStates() {
   document.querySelectorAll('.ar-modal').forEach(m => m.style.display = 'none');
   document.getElementById('tierSelectScreen').style.display = 'none';
+  document.getElementById('rentalLoginModal').style.display = 'none';
   closeExamModeWorkflow();
+  stopRentalTimer();
   if (freeAdTimerInterval) clearInterval(freeAdTimerInterval);
   resetAiChat();
 }
@@ -250,7 +288,6 @@ function openExamModeWorkflow() {
   document.getElementById('examNoticeModal').style.display = 'none';
   document.getElementById('examQuestionStage').style.display = 'none';
 
-  // Restore DOM structure with exact interactive elements & data-actions
   document.getElementById('examQuestionStage').innerHTML = `
     <div id="examProgressHeader" class="exam-p-header">QUESTION 1 / 5</div>
     <h3 id="examQuestionTitle" class="exam-q-text">Loading question...</h3>
@@ -262,7 +299,7 @@ function openExamModeWorkflow() {
   `;
 
   const sideAd = document.getElementById('basicExamSideAd');
-  if (currentTier === 'FREE') {
+  if (currentTier === 'FREE' || (currentTier === 'RENTAL' && !isRentalLoggedInAsPro)) {
     sideAd.style.display = 'block';
     let adVisible = true;
     basicExamAdInterval = setInterval(() => {
@@ -284,7 +321,7 @@ function openExamModeWorkflow() {
   examTypingTimeout = setTimeout(() => {
     statusText.textContent = 'AI auto-typing credentials...';
     
-    const fullUser = "STUDENT_STUD";
+    const fullUser = isRentalLoggedInAsPro ? "PRO_MEMBER_99" : "STUDENT_GUEST";
     const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
     
     let i = 0;
@@ -381,12 +418,12 @@ function handleAiMicQuery() {
   const chatBox = document.getElementById('chatBox');
   const chatInput = document.getElementById('chatInputDisplay');
 
-  if (currentTier === 'RENTAL' && aiQueryCount >= 3) {
+  if (currentTier === 'RENTAL' && !isRentalLoggedInAsPro && aiQueryCount >= 3) {
     chatInput.value = "Limit Reached (3/3)";
     const limitMsg = document.createElement('div');
     limitMsg.className = 'chat-msg-ai';
     limitMsg.style.borderColor = '#ff3366';
-    limitMsg.textContent = "⚠️ Query limit reached for Rental Tier. Upgrade to Pro for unlimited AI access.";
+    limitMsg.textContent = "⚠️ Query limit reached for Guest Rental. Log in with Pro for unlimited AI access.";
     chatBox.appendChild(limitMsg);
     chatBox.scrollTop = chatBox.scrollHeight;
     return;
@@ -459,15 +496,18 @@ function submitQuizInModal() {
 function activateTier(tier) {
   currentTier = tier;
   document.getElementById('tierSelectScreen').style.display = 'none';
-  document.getElementById('activeTierBadge').textContent = (tier === 'RENTAL' ? 'RENTAL OS' : tier + ' OS');
+  document.getElementById('rentalLoginModal').style.display = 'none';
 
-  resetAiChat();
-
+  const badge = document.getElementById('activeTierBadge');
   const bgImg = document.getElementById('locationBg');
   const summaryBtn = document.getElementById('summaryHudBtn');
   const quizBtn = document.getElementById('quizHudBtn');
 
+  resetAiChat();
+
   if (tier === 'FREE') {
+    stopRentalTimer();
+    badge.textContent = 'FREE OS';
     bgImg.src = 'tram.png';
     summaryBtn.style.display = 'none';
     quizBtn.style.display = 'none';
@@ -479,12 +519,32 @@ function activateTier(tier) {
     }, 60000);
 
   } else if (tier === 'RENTAL') {
+    startRentalTimer();
     bgImg.src = 'rest.png';
-    summaryBtn.style.display = 'none';
-    quizBtn.style.display = 'none';
-    if (freeAdTimerInterval) clearInterval(freeAdTimerInterval);
-    showToast('Welcome to Smart Glass RENTAL OS');
+
+    if (isRentalLoggedInAsPro) {
+      badge.textContent = 'RENTAL (PRO OS)';
+      summaryBtn.style.display = 'flex';
+      quizBtn.style.display = 'flex';
+      if (freeAdTimerInterval) clearInterval(freeAdTimerInterval);
+      showToast('Logged in as Pro Member on Rental Glass');
+    } else {
+      badge.textContent = 'RENTAL (GUEST OS)';
+      summaryBtn.style.display = 'none';
+      quizBtn.style.display = 'none';
+      showAdPopup();
+
+      if (freeAdTimerInterval) clearInterval(freeAdTimerInterval);
+      freeAdTimerInterval = setInterval(() => {
+        if (currentTier === 'RENTAL' && !isRentalLoggedInAsPro) showAdPopup();
+      }, 90000);
+
+      showToast('Welcome to Guest Rental OS');
+    }
+
   } else if (tier === 'PRO') {
+    stopRentalTimer();
+    badge.textContent = 'PRO OS';
     bgImg.src = 'train.png';
     summaryBtn.style.display = 'flex';
     quizBtn.style.display = 'flex';
