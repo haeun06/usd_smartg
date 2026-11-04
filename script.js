@@ -16,14 +16,17 @@ const H = 900;
 let aim = { x: -999, y: -999, visible: false };
 let holdStartTime = null;
 let currentHoverTarget = null;
-const HOLD_MS = 250; // 0.25s trigger
+const HOLD_MS = 250;
 
-let lastTriggerTime = 0; // Debounce timer
-let currentTier = 'FREE'; // FREE, PLUS, PRO
+let lastTriggerTime = 0;
+let currentTier = 'FREE';
 let currentAdIndex = 0;
 let freeAdTimerInterval = null;
+let basicExamAdInterval = null;
+let examTypingTimeout = null;
+let examTypingInterval = null;
 
-// SLIDE AUTO-ROTATION (Every 10 seconds)
+// SLIDE AUTO-ROTATION
 const slideImages = ['lectureusd.png', 'ppt2.png', 'ppt3.png', 'ppt4.png', 'ppt5.png', 'ppt6.png'];
 const slideSubtitles = [
   "This is live translation... abcd",
@@ -54,7 +57,7 @@ const aiScenarios = [
   { q: "How does AR OS improve classroom learning?", a: "AR OS offers real-time subtitle translation, instant AI query resolution, and visual glossary overlays directly in view." }
 ];
 
-// IN-MODAL AI QUIZ SYSTEM
+// PRO EXCLUSIVE QUIZ SYSTEM
 let quizStep = 0;
 let userAnswers = [-1, -1, -1];
 const quizData = [
@@ -63,7 +66,18 @@ const quizData = [
   { q: "Q3. How many subscription tiers exist in this Smart Glasses OS?", opts: ["2 Tiers", "3 Tiers", "5 Tiers"], ans: 1 }
 ];
 
-// 3. HAND HOVER INTERACTION LOGIC WITH DEBOUNCE
+// EXAM MODE 5 QUESTIONS DATA
+let examStep = 0;
+let examUserAnswers = [-1, -1, -1, -1, -1];
+const examQuestionsData = [
+  { q: "Q1. What is the longest river in the world?", opts: ["Amazon River", "Nile River", "Yangtze River", "Mississippi River"], ans: 1 },
+  { q: "Q2. What does Newton's Second Law of Motion state?", opts: ["Action = Reaction", "Force = Mass × Acceleration", "Objects stay at rest", "Energy cannot be destroyed"], ans: 1 },
+  { q: "Q3. What is the chemical formula for water?", opts: ["CO2", "O2", "H2O", "NaCl"], ans: 2 },
+  { q: "Q4. Which planet is known as the Red Planet?", opts: ["Venus", "Jupiter", "Mars", "Saturn"], ans: 2 },
+  { q: "Q5. What is the main gas that makes up Earth's atmosphere?", opts: ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"], ans: 1 }
+];
+
+// 3. HAND HOVER INTERACTION LOGIC
 function checkHoverTargets() {
   const elements = document.querySelectorAll('.interactive-element');
   let hoveredElem = null;
@@ -86,9 +100,7 @@ function checkHoverTargets() {
   });
 
   const now = performance.now();
-  if (now - lastTriggerTime < 1200) {
-    return;
-  }
+  if (now - lastTriggerTime < 1200) return;
 
   if (hoveredElem) {
     if (currentHoverTarget !== hoveredElem) {
@@ -113,7 +125,7 @@ function checkHoverTargets() {
   }
 }
 
-// 4. ACTION TRIGGERS & TIER LOGIC
+// 4. ACTION TRIGGERS
 function triggerAction(action) {
   if (!action) return;
 
@@ -123,15 +135,35 @@ function triggerAction(action) {
   } else if (action === 'selectFree') {
     activateTier('FREE');
   } else if (action === 'selectPlus') {
-    activateTier('PLUS');
+    activateTier('RENTAL');
   } else if (action === 'selectPro') {
     activateTier('PRO');
   } else if (action === 'resetToStart') {
-    document.querySelectorAll('.ar-modal').forEach(m => m.style.display = 'none');
-    document.getElementById('tierSelectScreen').style.display = 'none';
+    resetAllStates();
     document.getElementById('howToUseScreen').style.display = 'flex';
-    if (freeAdTimerInterval) clearInterval(freeAdTimerInterval);
     showToast('Resetting to Initial Setup');
+  } else if (action === 'openExamMode') {
+    openExamModeWorkflow();
+  } else if (action === 'exitExamMode') {
+    closeExamModeWorkflow();
+  } else if (action === 'startExamQuestions') {
+    document.getElementById('examNoticeModal').style.display = 'none';
+    document.getElementById('examQuestionStage').style.display = 'block';
+    examStep = 0;
+    examUserAnswers = [-1, -1, -1, -1, -1];
+    renderExamQuestion();
+  } else if (action === 'examPrev') {
+    if (examStep > 0) { examStep--; renderExamQuestion(); }
+  } else if (action === 'examNext') {
+    if (examStep < examQuestionsData.length - 1) {
+      examStep++; renderExamQuestion();
+    } else {
+      submitExamStage();
+    }
+  } else if (action.startsWith('selectExamOpt_')) {
+    const optIdx = parseInt(action.split('_')[1]);
+    examUserAnswers[examStep] = optIdx;
+    renderExamQuestion();
   } else if (action === 'alarm') {
     toggleModal('alarmModal');
   } else if (action === 'calendar') {
@@ -144,7 +176,7 @@ function triggerAction(action) {
     document.getElementById('calDetailBox').textContent = "📌 Nov 10: M6 Start";
   } else if (action === 'ai') {
     if (currentTier === 'FREE') {
-      showToast('AI Assistant requires Plus/Pro Tier');
+      showToast('AI Assistant requires Rental/Pro Tier');
     } else {
       toggleModal('aiModal');
     }
@@ -152,7 +184,7 @@ function triggerAction(action) {
     handleAiMicQuery();
   } else if (action === 'subtitle') {
     if (currentTier === 'FREE') {
-      showToast('Live Subtitles require Plus/Pro Tier');
+      showToast('Live Subtitles require Rental/Pro Tier');
     } else {
       const sub = document.getElementById('subtitleBox');
       sub.style.display = (sub.style.display === 'block') ? 'none' : 'block';
@@ -161,7 +193,7 @@ function triggerAction(action) {
     showToast('Lecture Moment Saved');
   } else if (action === 'word') {
     if (currentTier === 'FREE') {
-      showToast('Key Glossary requires Plus/Pro Tier');
+      showToast('Key Glossary requires Rental/Pro Tier');
     } else {
       toggleModal('wordModal');
     }
@@ -187,16 +219,174 @@ function triggerAction(action) {
   }
 }
 
+function resetAllStates() {
+  document.querySelectorAll('.ar-modal').forEach(m => m.style.display = 'none');
+  document.getElementById('tierSelectScreen').style.display = 'none';
+  closeExamModeWorkflow();
+  if (freeAdTimerInterval) clearInterval(freeAdTimerInterval);
+  resetAiChat();
+}
+
+function resetAiChat() {
+  aiQueryCount = 0;
+  const chatBox = document.getElementById('chatBox');
+  const chatInput = document.getElementById('chatInputDisplay');
+  if (chatBox) {
+    chatBox.innerHTML = `<div class="chat-msg-ai">Hello! Tap the microphone button below to ask a question.</div>`;
+  }
+  if (chatInput) {
+    chatInput.value = '';
+  }
+}
+
+// EXAM MODE WORKFLOW RESET & LAUNCH
+function openExamModeWorkflow() {
+  closeExamModeWorkflow();
+
+  const overlay = document.getElementById('examModeOverlay');
+  overlay.style.display = 'flex';
+
+  document.getElementById('examLoginCard').style.display = 'block';
+  document.getElementById('examNoticeModal').style.display = 'none';
+  document.getElementById('examQuestionStage').style.display = 'none';
+
+  // Restore DOM structure with exact interactive elements & data-actions
+  document.getElementById('examQuestionStage').innerHTML = `
+    <div id="examProgressHeader" class="exam-p-header">QUESTION 1 / 5</div>
+    <h3 id="examQuestionTitle" class="exam-q-text">Loading question...</h3>
+    <div id="examOptionsGrid" class="exam-options-container"></div>
+    <div class="quiz-nav-row" id="examNavRow">
+      <button id="examPrevBtn" class="interactive-element quiz-nav-btn" data-action="examPrev">BACK</button>
+      <button id="examNextBtn" class="interactive-element quiz-nav-btn" data-action="examNext">NEXT</button>
+    </div>
+  `;
+
+  const sideAd = document.getElementById('basicExamSideAd');
+  if (currentTier === 'FREE') {
+    sideAd.style.display = 'block';
+    let adVisible = true;
+    basicExamAdInterval = setInterval(() => {
+      adVisible = !adVisible;
+      sideAd.style.display = adVisible ? 'block' : 'none';
+    }, 5000);
+  } else {
+    sideAd.style.display = 'none';
+  }
+
+  const uInput = document.getElementById('examUsername');
+  const pInput = document.getElementById('examPasscode');
+  const statusText = document.getElementById('typingStatusText');
+
+  uInput.value = '';
+  pInput.value = '';
+  statusText.textContent = 'Waiting 5 seconds before initializing AI login...';
+
+  examTypingTimeout = setTimeout(() => {
+    statusText.textContent = 'AI auto-typing credentials...';
+    
+    const fullUser = "STUDENT_STUD";
+    const randomCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    let i = 0;
+    examTypingInterval = setInterval(() => {
+      if (i < fullUser.length) {
+        uInput.value += fullUser[i];
+        highlightKey(fullUser[i].toLowerCase());
+      }
+      if (i < randomCode.length) {
+        pInput.value += randomCode[i];
+        highlightKey(randomCode[i]);
+      }
+      i++;
+
+      if (i >= Math.max(fullUser.length, randomCode.length)) {
+        clearInterval(examTypingInterval);
+        statusText.textContent = '✓ Identity Verified. Opening Exam Rules...';
+        setTimeout(() => {
+          document.getElementById('examLoginCard').style.display = 'none';
+          document.getElementById('examNoticeModal').style.display = 'block';
+        }, 1200);
+      }
+    }, 220);
+  }, 5000);
+}
+
+function closeExamModeWorkflow() {
+  document.getElementById('examModeOverlay').style.display = 'none';
+  if (basicExamAdInterval) clearInterval(basicExamAdInterval);
+  if (examTypingTimeout) clearTimeout(examTypingTimeout);
+  if (examTypingInterval) clearInterval(examTypingInterval);
+  examStep = 0;
+  examUserAnswers = [-1, -1, -1, -1, -1];
+}
+
+function highlightKey(char) {
+  const elem = document.getElementById(`key-${char}`);
+  if (elem) {
+    elem.classList.add('key-active');
+    setTimeout(() => elem.classList.remove('key-active'), 180);
+  }
+}
+
+// RENDER EXAM QUESTION
+function renderExamQuestion() {
+  const qData = examQuestionsData[examStep];
+  document.getElementById('examProgressHeader').textContent = `QUESTION ${examStep + 1} / ${examQuestionsData.length}`;
+  document.getElementById('examQuestionTitle').textContent = qData.q;
+
+  const container = document.getElementById('examOptionsGrid');
+  container.innerHTML = qData.opts.map((optText, idx) => `
+    <div class="exam-opt-card interactive-element ${examUserAnswers[examStep] === idx ? 'exam-opt-active' : ''}"
+         data-action="selectExamOpt_${idx}">
+      ${String.fromCharCode(65 + idx)}. ${optText}
+    </div>
+  `).join('');
+
+  const prevBtn = document.getElementById('examPrevBtn');
+  const nextBtn = document.getElementById('examNextBtn');
+
+  if (prevBtn) prevBtn.style.display = (examStep === 0) ? 'none' : 'block';
+  if (nextBtn) nextBtn.textContent = (examStep === examQuestionsData.length - 1) ? 'SUBMIT EXAM' : 'NEXT';
+}
+
+function submitExamStage() {
+  const stage = document.getElementById('examQuestionStage');
+  
+  stage.innerHTML = `
+    <div style="text-align: center; padding: 60px 0;">
+      <div style="font-family:'Orbitron'; font-size: 26px; color: var(--ar-cyan); margin-bottom: 20px;">AI SCORING EXAM RESPONSES...</div>
+      <div style="font-size: 16px; color: rgba(255,255,255,0.7);">Evaluating answers and proctoring video logs...</div>
+    </div>
+  `;
+
+  let correctCount = 0;
+  examUserAnswers.forEach((ans, idx) => {
+    if (ans === examQuestionsData[idx].ans) correctCount++;
+  });
+  const scorePercent = Math.round((correctCount / examQuestionsData.length) * 100);
+
+  setTimeout(() => {
+    stage.innerHTML = `
+      <div style="text-align: center; padding: 30px 0;">
+        <div style="font-family:'Orbitron'; font-size: 28px; color: var(--ar-green); margin-bottom: 16px;">EXAM COMPLETED!</div>
+        <div style="font-family:'Orbitron'; font-size: 58px; font-weight: 900; color: #fff; margin-bottom: 12px; text-shadow: 0 0 25px var(--ar-green);">${scorePercent}%</div>
+        <div style="font-size: 20px; color: var(--ar-cyan); margin-bottom: 30px;">SCORE: ${correctCount} / ${examQuestionsData.length} CORRECT</div>
+        <button class="interactive-element quiz-nav-btn" data-action="exitExamMode" style="margin: 0 auto; display: block;">EXIT TO LECTURE</button>
+      </div>
+    `;
+  }, 3000);
+}
+
 function handleAiMicQuery() {
   const chatBox = document.getElementById('chatBox');
   const chatInput = document.getElementById('chatInputDisplay');
 
-  if (currentTier === 'PLUS' && aiQueryCount >= 3) {
+  if (currentTier === 'RENTAL' && aiQueryCount >= 3) {
     chatInput.value = "Limit Reached (3/3)";
     const limitMsg = document.createElement('div');
     limitMsg.className = 'chat-msg-ai';
     limitMsg.style.borderColor = '#ff3366';
-    limitMsg.textContent = "Query limit reached for Plus Tier. Please wait 24 hours or upgrade to Pro for unlimited AI access.";
+    limitMsg.textContent = "⚠️ Query limit reached for Rental Tier. Upgrade to Pro for unlimited AI access.";
     chatBox.appendChild(limitMsg);
     chatBox.scrollTop = chatBox.scrollHeight;
     return;
@@ -247,7 +437,6 @@ function renderQuizStep() {
 
 function submitQuizInModal() {
   const container = document.getElementById('quizContainer');
-  
   container.innerHTML = `
     <div style="text-align: center; padding-top: 80px;">
       <div style="font-family:'Orbitron'; font-size: 24px; color: var(--ar-cyan); margin-bottom: 20px;">AI EVALUATION IN PROGRESS...</div>
@@ -270,7 +459,9 @@ function submitQuizInModal() {
 function activateTier(tier) {
   currentTier = tier;
   document.getElementById('tierSelectScreen').style.display = 'none';
-  document.getElementById('activeTierBadge').textContent = tier + ' OS';
+  document.getElementById('activeTierBadge').textContent = (tier === 'RENTAL' ? 'RENTAL OS' : tier + ' OS');
+
+  resetAiChat();
 
   const bgImg = document.getElementById('locationBg');
   const summaryBtn = document.getElementById('summaryHudBtn');
@@ -287,12 +478,12 @@ function activateTier(tier) {
       if (currentTier === 'FREE') showAdPopup();
     }, 60000);
 
-  } else if (tier === 'PLUS') {
+  } else if (tier === 'RENTAL') {
     bgImg.src = 'rest.png';
     summaryBtn.style.display = 'none';
     quizBtn.style.display = 'none';
     if (freeAdTimerInterval) clearInterval(freeAdTimerInterval);
-    showToast('Welcome to Smart Glass PLUS OS');
+    showToast('Welcome to Smart Glass RENTAL OS');
   } else if (tier === 'PRO') {
     bgImg.src = 'train.png';
     summaryBtn.style.display = 'flex';
@@ -415,5 +606,3 @@ navigator.mediaDevices.getUserMedia({ video: { width: 1440, height: 900, facingM
     camera.start();
   })
   .catch((err) => console.error("Camera access error:", err));
-
-
