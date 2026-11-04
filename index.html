@@ -21,7 +21,7 @@
   <!-- Dynamic Location Background Image -->
   <img id="locationBg" src="tram.png" alt="Context Location" onerror="this.style.display='none'">
 
-  <!-- Hidden Video Stream (Kept active for background hand tracking) -->
+  <!-- Hidden Video Stream for Background Hand Tracking -->
   <video id="video" autoplay playsinline muted style="opacity: 0; position: absolute; pointer-events: none;"></video>
 
   <!-- Interactive Tracking Canvas -->
@@ -48,7 +48,7 @@
   <div id="tierSelectScreen" class="overlay-screen" style="display: none;">
     <div class="tier-container">
       <h2 class="tier-header-title">SELECT OS TIER</h2>
-      <p class="tier-header-subtitle">Choose a subscription tier to experience customized AR HUD features.</p>
+      <p class="tier-header-subtitle">Choose a subscription or station rental tier to experience customized AR HUD features.</p>
       
       <div class="tier-cards-wrapper">
         <!-- FREE TIER -->
@@ -61,25 +61,25 @@
             <li>Tram View Background</li>
             <li>Bookmark Saved Moments</li>
             <li class="disabled-feat">No Live Translation</li>
-            <li class="disabled-feat">No AI Assistant</li>
+            <li class="disabled-feat">Exam Mode Ad Interruptions</li>
           </ul>
           <button class="interactive-element tier-select-btn" data-action="selectFree">SELECT FREE</button>
         </div>
 
-        <!-- PLUS TIER -->
+        <!-- RENTAL TIER -->
         <div class="tier-card highlighted-tier">
-          <div class="tier-tag plus-tag">RECOMMENDED</div>
-          <h3 class="tier-name">PLUS VERSION</h3>
-          <div class="tier-price">$9.99 / Month</div>
-          <div class="tier-login-req">ACCOUNT LOGIN REQUIRED</div>
+          <div class="tier-tag plus-tag">STATION RENTAL</div>
+          <h3 class="tier-name">RENTAL VERSION</h3>
+          <div class="tier-price">$2.50 / Hour</div>
+          <div class="tier-login-req">STATION CHARGESPOT RENTAL</div>
           <ul class="tier-features">
+            <li>Rent at Cafes, Libraries & Airports</li>
             <li>Restaurant View Background</li>
-            <li>Unlimited Live Translation</li>
-            <li>Large Glossary Reference</li>
+            <li>Ad-Free Lecture HUD</li>
             <li>3 AI Queries Available</li>
-            <li class="disabled-feat">No AI Summary & Quiz</li>
+            <li>Ad-Free Exam Mode Access</li>
           </ul>
-          <button class="interactive-element tier-select-btn" data-action="selectPlus">SELECT PLUS</button>
+          <button class="interactive-element tier-select-btn" data-action="selectPlus">SELECT RENTAL</button>
         </div>
 
         <!-- PRO TIER -->
@@ -87,12 +87,12 @@
           <div class="tier-tag pro-tag">PRO AI</div>
           <h3 class="tier-name">PRO VERSION</h3>
           <div class="tier-price">$19.99 / Month</div>
-          <div class="tier-login-req">ACCOUNT LOGIN REQUIRED</div>
+          <div class="tier-login-req">FULL OWNERSHIP SUITE</div>
           <ul class="tier-features">
             <li>Train View Background</li>
             <li>Extended AI Queries (5 Questions)</li>
             <li>Large AI Summary HUD</li>
-            <li>Interactive AI Quiz Modal</li>
+            <li>Interactive AI Quiz & Exam Mode</li>
             <li>Full Presentation Suite</li>
           </ul>
           <button class="interactive-element tier-select-btn pro-btn" data-action="selectPro">SELECT PRO</button>
@@ -106,7 +106,7 @@
     <div class="ad-badge">SPONSORED ADVERTISEMENT</div>
     <div class="ad-content">
       <img id="adBannerImg" src="adbannerusd.png" alt="Ad Banner" class="ad-banner-img">
-      <div class="ad-text-title">Upgrade to Plus/Pro for Ad-Free Experience</div>
+      <div class="ad-text-title">Upgrade to Rental/Pro for Ad-Free Experience</div>
     </div>
     <div id="adCountdownText">Ad closes in <span id="adTimer">5</span>s...</div>
   </div>
@@ -114,6 +114,10 @@
   <!-- MAIN HUD TOP BAR -->
   <div id="hudTop">
     <div id="activeTierBadge" class="tier-badge-hud">FREE OS</div>
+
+    <div id="examModeToggleBtn" class="hud-btn interactive-element exam-highlight-btn" data-action="openExamMode">
+      <span class="exam-btn-label">EXAM MODE</span>
+    </div>
 
     <div class="hud-btn interactive-element" data-action="calendar">
       <img src="calendarusd.png" alt="Calendar">
@@ -138,7 +142,6 @@
     <div class="hud-btn interactive-element tier-feat-ai" data-action="ai">
       <img src="aihelperusd.png" alt="AI Helper">
     </div>
-    <!-- Pro Exclusive Buttons -->
     <div id="summaryHudBtn" class="hud-btn interactive-element pro-only-btn" data-action="summary" style="display: none;">
       <span class="pro-btn-text">AI SUM</span>
     </div>
@@ -160,6 +163,78 @@
     </div>
   </div>
 
+  <!-- ================= EXAM MODE SCREEN OVERLAY ================= -->
+  <div id="examModeOverlay" class="overlay-screen exam-mode-bg" style="display: none;">
+    <div class="ai-proctor-banner">
+      <span class="red-pulse-dot">●</span> [AI MONITORING SURROUNDINGS FOR CHEATING]
+    </div>
+
+    <button class="interactive-element exam-exit-btn" data-action="exitExamMode">EXIT TO LECTURE</button>
+
+    <!-- EXAM STEP 1: AUTO-TYPING LOGIN -->
+    <div id="examLoginCard" class="exam-card">
+      <h2 class="exam-card-title">SECURE EXAM LOGIN</h2>
+      <p class="exam-card-sub">AI Identity Verification System</p>
+
+      <div class="input-field-group">
+        <label>STUDENT USERNAME</label>
+        <input type="text" id="examUsername" class="exam-input" placeholder="Authenticating..." readonly>
+      </div>
+
+      <div class="input-field-group">
+        <label>TEST ACCESS CODE (RANDOM 6-DIGIT)</label>
+        <input type="text" id="examPasscode" class="exam-input" placeholder="Verifying..." readonly>
+      </div>
+
+      <div class="virtual-keyboard">
+        <div class="kb-row">
+          <span class="kb-key" id="key-q">Q</span><span class="kb-key" id="key-w">W</span><span class="kb-key" id="key-e">E</span><span class="kb-key" id="key-r">R</span><span class="kb-key" id="key-t">T</span><span class="kb-key" id="key-y">Y</span><span class="kb-key" id="key-u">U</span><span class="kb-key" id="key-i">I</span><span class="kb-key" id="key-o">O</span><span class="kb-key" id="key-p">P</span>
+        </div>
+        <div class="kb-row">
+          <span class="kb-key" id="key-a">A</span><span class="kb-key" id="key-s">S</span><span class="kb-key" id="key-d">D</span><span class="kb-key" id="key-f">F</span><span class="kb-key" id="key-g">G</span><span class="kb-key" id="key-h">H</span><span class="kb-key" id="key-j">J</span><span class="kb-key" id="key-k">K</span><span class="kb-key" id="key-l">L</span>
+        </div>
+        <div class="kb-row">
+          <span class="kb-key" id="key-z">Z</span><span class="kb-key" id="key-x">X</span><span class="kb-key" id="key-c">C</span><span class="kb-key" id="key-v">V</span><span class="kb-key" id="key-b">B</span><span class="kb-key" id="key-n">N</span><span class="kb-key" id="key-m">M</span>
+        </div>
+        <div class="kb-row num-row">
+          <span class="kb-key" id="key-1">1</span><span class="kb-key" id="key-2">2</span><span class="kb-key" id="key-3">3</span><span class="kb-key" id="key-4">4</span><span class="kb-key" id="key-5">5</span><span class="kb-key" id="key-6">6</span><span class="kb-key" id="key-7">7</span><span class="kb-key" id="key-8">8</span><span class="kb-key" id="key-9">9</span><span class="kb-key" id="key-0">0</span>
+        </div>
+      </div>
+      <div id="typingStatusText" class="typing-status">Waiting 5 seconds to initialize auto-typing...</div>
+    </div>
+
+    <!-- EXAM STEP 2: INSTRUCTIONS MODAL -->
+    <div id="examNoticeModal" class="exam-card" style="display: none;">
+      <h2 class="exam-card-title" style="color: var(--ar-cyan);">ACADEMIC HONOR CODE</h2>
+      <div class="notice-text-content">
+        <p>1. This is an official online monitored examination.</p>
+        <p>2. The AR Smart Glasses camera will actively monitor your surroundings for unauthorized physical or digital assistance.</p>
+        <p>3. Do not leave the visual frame during the examination.</p>
+        <p>4. Submitting false identity details will result in instant disqualification.</p>
+      </div>
+      <button class="interactive-element main-action-btn exam-start-btn" data-action="startExamQuestions">I AGREE & START EXAM</button>
+    </div>
+
+    <!-- EXAM STEP 3: QUESTIONS STAGE -->
+    <div id="examQuestionStage" class="exam-card exam-test-stage" style="display: none;">
+      <div id="examProgressHeader" class="exam-p-header">QUESTION 1 / 5</div>
+      <h3 id="examQuestionTitle" class="exam-q-text">Loading question...</h3>
+      <div id="examOptionsGrid" class="exam-options-container"></div>
+      
+      <div class="quiz-nav-row" id="examNavRow">
+        <button id="examPrevBtn" class="interactive-element quiz-nav-btn" data-action="examPrev">BACK</button>
+        <button id="examNextBtn" class="interactive-element quiz-nav-btn" data-action="examNext">NEXT</button>
+      </div>
+    </div>
+
+    <!-- BASIC TIER EXAM RECURRING SIDE AD -->
+    <div id="basicExamSideAd" class="basic-exam-ad-box" style="display: none;">
+      <div class="ad-badge" style="font-size:10px;">SPONSORED AD (BASIC TIER)</div>
+      <img src="ad2.png" alt="Side Ad" class="basic-ad-img" onerror="this.src='adbannerusd.png'">
+      <div style="font-size:11px; color:#fff; font-weight:bold;">Distraction Alert: Upgrade to Rental/Pro for Ad-Free Exams</div>
+    </div>
+  </div>
+
   <!-- POPUP MODALS -->
   <div id="alarmModal" class="ar-modal">
     <div style="font-weight:700; font-size:18px; margin-bottom:14px; color:var(--ar-cyan);">🔔 NOTIFICATIONS</div>
@@ -167,17 +242,15 @@
     <div class="notif-item">• Report Submission Deadline</div>
   </div>
 
-  <!-- NOVEMBER 2026 CALENDAR WITH TODAY HIGHLIGHT (NOV 2) -->
+  <!-- NOVEMBER 2026 CALENDAR (TODAY HIGHLIGHT: NOV 5) -->
   <div id="calendarModal" class="ar-modal">
     <div style="font-weight:700; font-size:20px; color:var(--ar-cyan); text-align:center;">NOVEMBER 2026</div>
     <div class="cal-grid">
       <div class="cal-day-head">S</div><div class="cal-day-head">M</div><div class="cal-day-head">T</div>
       <div class="cal-day-head">W</div><div class="cal-day-head">T</div><div class="cal-day-head">F</div><div class="cal-day-head">S</div>
       
-      <div class="cal-date">1</div>
-      <div class="cal-date cal-today">2</div><!-- TODAY CHECK (NOV 2, 2026) -->
-      <div class="cal-date">3</div><div class="cal-date">4</div>
-      <div class="cal-date cal-event interactive-element" data-action="cal_5">5</div>
+      <div class="cal-date">1</div><div class="cal-date">2</div><div class="cal-date">3</div><div class="cal-date">4</div>
+      <div class="cal-date cal-event cal-today interactive-element" data-action="cal_5">5</div><!-- TODAY: NOV 5 -->
       <div class="cal-date">6</div><div class="cal-date">7</div><div class="cal-date">8</div>
       <div class="cal-date cal-event interactive-element" data-action="cal_9">9</div>
       <div class="cal-date cal-event interactive-element" data-action="cal_10">10</div>
@@ -242,5 +315,3 @@
 <script src="script.js"></script>
 </body>
 </html>
-
-
