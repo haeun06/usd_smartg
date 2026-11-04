@@ -130,8 +130,28 @@ body {
 }
 .pro-btn { background: var(--ar-purple); color: #fff; box-shadow: 0 0 25px rgba(168, 85, 247, 0.4); }
 
+/* RENTAL PRO PROMPT MODAL STYLING */
+.rental-prompt-modal {
+  top: 50%; left: 50%; transform: translate(-50%, -50%); width: 620px; text-align: center;
+  border-color: var(--ar-cyan); z-index: 50; padding: 40px;
+}
+.modal-prompt-btn {
+  padding: 16px 28px; border-radius: 25px; border: none; font-family: 'Orbitron', sans-serif;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.prompt-yes { background: var(--ar-purple); color: #fff; box-shadow: 0 0 20px rgba(168, 85, 247, 0.4); }
+.prompt-no { background: rgba(255,255,255,0.15); color: #fff; border: 1.5px solid rgba(255,255,255,0.3); }
+
 /* HUD BUTTONS & TOP BAR */
 #hudTop { position: absolute; top: 40px; right: 45px; display: flex; align-items: center; gap: 20px; z-index: 20; }
+
+/* RENTAL USAGE TIMER BOX */
+.rental-timer-box {
+  background: rgba(10, 18, 32, 0.92); border: 2.5px solid var(--ar-green); color: var(--ar-green);
+  padding: 0 22px; border-radius: 22px; font-family: 'Orbitron', sans-serif; font-size: 15px;
+  font-weight: 700; display: flex; align-items: center; height: 78px; box-shadow: 0 0 20px rgba(57, 255, 20, 0.35);
+}
+
 .tier-badge-hud {
   background: rgba(10, 18, 32, 0.92); border: 2.5px solid var(--ar-cyan); color: var(--ar-cyan);
   padding: 0 24px; border-radius: 22px; font-family: 'Orbitron', sans-serif; font-size: 16px;
